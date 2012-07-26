@@ -28,9 +28,18 @@ typedef struct {
 } pcol_buffer_t;
 
 typedef struct {
+
+  float x,y,z; 
+} pcol_point_t;
+
+
+typedef struct {
   
-  float x,y,z;
+  pcol_point_t future; /* possible position */
+  pcol_point_t current; /* good position */
+
   float radius; /* if < 0.0 then not in use */
+  float probeRadius;
 
 } pcol_dynamic_t;
 
@@ -38,7 +47,6 @@ typedef struct {
 
   pcol_dynamic_t *points;
   int numof;
-  int used;
 
 } pcol_dynamicArray_t;
 
@@ -58,7 +66,12 @@ void pcol_useDataBuffer(pcol_session_t * session,
 			void * data, int numof, size_t interval,size_t start);
 
 
+pcol_dynamic_t * pcol_receiveDynamic(pcol_session_t * session);
+void pcol_beridDynamic(pcol_dynamic_t * dynamic);
 
+/* binary collision checks */
+
+int pcol_binaryCollisionCheck(pcol_session_t * session, pcol_dynamic_t * dynamic);
 
 
 

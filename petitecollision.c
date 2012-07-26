@@ -26,15 +26,19 @@ pcol_session_t * pcol_createSession(size_t memorysize, void * memory,int numofdy
   /* FIXME: this is just a cheat for the moment */
   session->dynamics = (pcol_dynamicArray_t *)MALLOC(sizeof(pcol_dynamicArray_t));
   session->dynamics->numof = numofdynamics;
-  session->dynamics->used = 0;
   session->dynamics->points = (pcol_dynamic_t *)MALLOC(sizeof(pcol_dynamic_t) * numofdynamics);
+
   int i = 0;
   for (; i < session->dynamics->numof; i++) {
 
     pcol_dynamic_t *p = &session->dynamics->points[i];
-    p->x = p->y = p->z = 0.0f;
+    p->current.x = p->current.y = p->current.z = 0.0f;
+    p->future = p->current;
+    p->probeRadius = 0.0f;
     p->radius = -1.0f; /* not in use */
   }
+
+  printf("%s session created\n",__FUNCTION__);
 
   return session;
 }
@@ -64,13 +68,15 @@ pcol_dynamic_t * pcol_receiveDynamic(pcol_session_t * session) {
   for (; i < session->dynamics->numof; i++) {
 
     p = &session->dynamics->points[i];
-    if (p->radius >= 0.00f) {
+    if (p->radius < 0.00f) {
       
       p->radius = 0.00f;
       return p;
     }
     
   }
+
+  printf("%s dynamic not found\n",__FUNCTION__);
 
   return 0;
 }
@@ -79,3 +85,51 @@ void pcol_beridDynamic(pcol_dynamic_t * dynamic) {
 
   dynamic->radius = -1.0f;
 }
+
+int intersect_RaySphere(pcol_point_t *origin, pcol_point_t *future,
+			pcol_point_t *centre, float radius) {
+
+  /* based on RaySphereInteresect from `Real-Time Rendering` pg.299 */
+
+  return 0;
+}
+
+int within_sphere(pcol_point_t *origin, pcol_point_t *target, float radius) {
+  
+  float x = origin->x - target->x;
+  float y = origin->y - target->y;
+  float z = origin->z - target->z;
+  
+  /*
+  printf("%s\n\torigin=%.2f,%.2f,%.2f\n\ttarget=%.2f,%.2f,%.2f\n",__FUNCTION__,
+	 origin->x,origin->y,origin->z,
+	 target->x,target->y,target->z);
+  */
+
+  return ((x * x) + (y * y) + (z * z) <= (radius * radius));
+}
+ 
+
+/* this is for development really don't use in production! */
+int pcol_binaryCollisionCheck(pcol_session_t * session, pcol_dynamic_t * dynamic) {
+
+  /* go through all the points and look for collisions : */
+  int i = 0;
+  int hits = 0;
+  int totalhits = 0;
+  pcol_point_t * p = (pcol_point_t *)(session->buffer.data + session->buffer.start);
+
+  //printf("ptr=%d, p=%d, interval=%d\n",(int)session->buffer.data,(int)p,session->buffer.interval);
+  //printf("\tx=%.2f,y=%.2f,z=%.2f\n",p->x,p->y,p->z);
+
+  for (; i < session->buffer.numof; i++) {
+
+    totalhits += within_sphere(&dynamic->future,p,dynamic->radius);
+
+    p = (pcol_point_t *)((void *)p + session->buffer.interval);
+    
+  }
+
+  return totalhits;
+}
+
