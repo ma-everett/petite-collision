@@ -56,3 +56,26 @@ void pcol_useDataBuffer(pcol_session_t * session,
   session->buffer.start = start;
 }
 
+pcol_dynamic_t * pcol_receiveDynamic(pcol_session_t * session) {
+
+  pcol_dynamic_t * p = 0;
+  
+  int i = 0;
+  for (; i < session->dynamics->numof; i++) {
+
+    p = &session->dynamics->points[i];
+    if (p->radius >= 0.00f) {
+      
+      p->radius = 0.00f;
+      return p;
+    }
+    
+  }
+
+  return 0;
+}
+
+void pcol_beridDynamic(pcol_dynamic_t * dynamic) {
+
+  dynamic->radius = -1.0f;
+}
