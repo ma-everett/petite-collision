@@ -3,15 +3,17 @@
 #include "petitecollision.h"
 #include <stdio.h>
 
+/* TODO: this should be in the client not in the library! */
 void *_palloc(void * ptr,size_t size,char *file, int line) {
 
   if (ptr != 0) {
-    printf("%s:%d free memory\n",file,line);
+    printf("%s:%d free %d\n",file,line,(int)ptr);
     return 0;
   }
   
-  printf("%s:%d alloc'd=%dbytes\n",file,line,size);
-  return malloc(size);
+  void *m = malloc(size);
+  printf("%s:%d malloc %d %dbytes\n",file,line,size,(int)m);
+  return m;
 }
 
 #define MALLOC(s) _palloc(0,(s),__FILE__,__LINE__)
@@ -116,7 +118,6 @@ int pcol_binaryCollisionCheck(pcol_session_t * session, pcol_dynamic_t * dynamic
   /* go through all the points and look for collisions : */
   int i = 0;
   int hits = 0;
-  int totalhits = 0;
   pcol_point_t * p = (pcol_point_t *)(session->buffer.data + session->buffer.start);
 
   //printf("ptr=%d, p=%d, interval=%d\n",(int)session->buffer.data,(int)p,session->buffer.interval);
@@ -124,12 +125,31 @@ int pcol_binaryCollisionCheck(pcol_session_t * session, pcol_dynamic_t * dynamic
 
   for (; i < session->buffer.numof; i++) {
 
-    totalhits += within_sphere(&dynamic->future,p,dynamic->radius);
+    hits += within_sphere(&dynamic->future,p,dynamic->radius);
 
     p = (pcol_point_t *)((void *)p + session->buffer.interval);
     
   }
 
-  return totalhits;
+  return hits;
+}
+
+int pcol_binaryCollisionCheckLimited(pcol_session_t *session, pcol_dynamic_t *dynamic,int limit) {
+
+  int i=0;
+  int hits = 0;
+  pcol_point_t * p = (pcol_point_t *)(session->buffer.data + session->buffer.start);
+
+  for (; i < session->buffer.numof; i++) {
+
+    hits += within_sphere(&dynamic->future,p,dynamic->radius);
+
+    p = (pcol_point_t *)((void *)p + session->buffer.interval);
+    
+    if (hits >= limit)
+      break;
+  }
+
+  return hits;
 }
 

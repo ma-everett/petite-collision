@@ -17,6 +17,8 @@ vertex_t * createVertices(int numof) {
 
   vertex_t *verts = (vertex_t *)malloc(sizeof(vertex_t) * numof);
 
+  assert(verts);
+
   float n = 1.0 / (float)numof;
   int i = 0;
   for (; i < numof; i++) {
@@ -30,7 +32,10 @@ vertex_t * createVertices(int numof) {
     v->b = 0.88f;
     v->a = 0.88f;
   }
-
+  verts[ (numof - 2) ].x = 8.000f;
+  verts[ (numof - 2) ].y = 4.5f;
+  verts[ (numof - 2) ].z = 0.00f;
+ 
   verts[ (numof - 1) ].x = 9.00f;
   verts[ (numof - 1) ].y = 5.00f;
   verts[ (numof - 1) ].z = 0.00f;
@@ -40,16 +45,17 @@ vertex_t * createVertices(int numof) {
   
 #define NUMOFDYNAMICS 5
 #define TOTALFRAMES 100
+#define NUMOFVERTICES 500
 
 int main(void) {
   
-  size_t size5mb = (1024 * 1024) * 5;
-  void * memory = malloc(size5mb); 
-  pcol_session_t * session = pcol_createSession(size5mb,memory,NUMOFDYNAMICS);
+  size_t size = (1024 * 1024) * 5;
+  void * memory = malloc(size); 
+  pcol_session_t * session = pcol_createSession(size,memory,NUMOFDYNAMICS);
   
-  vertex_t *verts = createVertices(5);
+  vertex_t *verts = createVertices(NUMOFVERTICES);
  
-  pcol_useDataBuffer( session, (void *)verts, 5, sizeof(vertex_t),0);
+  pcol_useDataBuffer( session, (void *)verts, NUMOFVERTICES, sizeof(vertex_t),0);
   
   /* grab a dynamic to use */
   pcol_dynamic_t * dyn = pcol_receiveDynamic(session);
@@ -71,9 +77,15 @@ int main(void) {
     /* update the dynamics position : */
     dyn->future.x += 0.1f;
     /* check for collisions */
-    hits = pcol_binaryCollisionCheck(session,dyn);
+    hits = pcol_binaryCollisionCheckLimited(session,dyn,5);
+
+    printf("[%03d] dyn.current = {%.2f,%.2f,%.2f\n",frames,
+	   dyn->current.x,dyn->current.y,dyn->current.z);
+
     if (hits > 0) {
-      printf("collision: x= %.2f, last good pos= %.2f\n",dyn->future.x,dyn->current.x);
+      printf("\t%d %s: x= %.2f, last good pos= %.2f\n",hits,(hits > 1) ? "collisions" : "collision",
+	     dyn->future.x,dyn->current.x);
+      
       dyn->future = dyn->current;
     }       
 

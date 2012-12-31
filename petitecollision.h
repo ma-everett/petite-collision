@@ -65,15 +65,13 @@ void pcol_destroySession(pcol_session_t * session);
 void pcol_useDataBuffer(pcol_session_t * session, 
 			void * data, int numof, size_t interval,size_t start);
 
-
 pcol_dynamic_t * pcol_receiveDynamic(pcol_session_t * session);
 void pcol_beridDynamic(pcol_dynamic_t * dynamic);
 
 /* binary collision checks */
 
 int pcol_binaryCollisionCheck(pcol_session_t * session, pcol_dynamic_t * dynamic);
-
-
+int pcol_binaryCollisionCheckLimited(pcol_session_t *session, pcol_dynamic_t *dynamic,int limit);
 
 
 #endif
